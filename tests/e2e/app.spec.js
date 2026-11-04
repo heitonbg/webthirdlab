@@ -11,6 +11,87 @@ async function addTask(page, title) {
   await page.getByRole('button', { name: 'Добавить', exact: true }).click();
 }
 
+test('Основной сценарий управляется клавиатурой, фокус остаётся видимым', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Как назовём список?').focus();
+  await page.keyboard.type('Учёба'); await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Переименовать', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab'); await page.keyboard.press('Tab');
+  await expect(page.getByLabel('Новая задача', { exact: true })).toBeFocused();
+  await page.keyboard.type('Первая задача'); await page.keyboard.press('Enter');
+  await page.getByRole('link', { name: 'Открыть задачу: Первая задача', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 2, name: 'Первая задача', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('checkbox', { name: 'Задача выполнена', exact: true })).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('checkbox', { name: 'Задача выполнена', exact: true })).toBeChecked();
+  await page.getByLabel('Новая подзадача', { exact: true }).focus();
+  await page.keyboard.type('Шаг'); await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Редактировать подзадачу: Шаг', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Название подзадачи', { exact: true })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Редактировать подзадачу: Шаг', exact: true })).toBeFocused();
+  const outline = await page.getByRole('button', { name: 'Редактировать подзадачу: Шаг', exact: true }).evaluate((element) => getComputedStyle(element).outlineWidth);
+  expect(parseFloat(outline)).toBeGreaterThan(0);
+});
+
+test('Задержка поиска составляет 300 мс после последнего ввода', async ({ page }) => {
+  await createList(page);
+  await addTask(page, 'Отчёт'); await addTask(page, 'Книга');
+  const start = new Date('2026-11-04T07:00:00Z');
+  await page.clock.install({ time: start });
+  await page.clock.pauseAt(new Date(start.getTime() + 1000));
+  await page.getByLabel('Поиск по названию в текущем списке').fill('От');
+  await page.clock.runFor(200);
+  await page.getByLabel('Поиск по названию в текущем списке').fill('Отч');
+  await page.clock.runFor(299);
+  expect(await page.locator('.task-list > li').count()).toBe(2);
+  await page.clock.runFor(1);
+  await expect(page.locator('.task-list > li')).toHaveCount(1);
+});
+
+test('Контраст текста обеих тем и эскизы готовых экранов', async ({ page }) => {
+  await createList(page);
+  await addTask(page, 'Подготовить лабораторную работу');
+  await addTask(page, 'Повторить React и маршрутизацию');
+  await addTask(page, 'Прочитать методичку');
+  await page.getByLabel('Выполнено: Прочитать методичку', { exact: true }).check();
+  const capture = async (name) => {
+    if (process.env.CAPTURE_DOCS === '1') await page.screenshot({ path: `docs/sketches/${name}.png`, fullPage: true });
+  };
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const theme of ['light', 'dark']) {
+    if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: /Включить .* тему/ }).click();
+    const ratios = await page.evaluate(() => {
+      const style = getComputedStyle(document.documentElement);
+      const luminance = (hex) => {
+        const values = hex.trim().slice(1).match(/.{2}/g).map((part) => parseInt(part, 16) / 255).map((value) => value <= 0.04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+        return values[0] * .2126 + values[1] * .7152 + values[2] * .0722;
+      };
+      const contrast = (a, b) => { const x = luminance(style.getPropertyValue(a)); const y = luminance(style.getPropertyValue(b)); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+      return ['--bg', '--surface', '--surface-alt'].flatMap((background) => ['--text', '--muted', '--accent', '--error'].map((foreground) => ({ foreground, background, ratio: contrast(foreground, background) })));
+    });
+    for (const combination of ratios) expect(combination.ratio, `${theme}: ${combination.foreground} / ${combination.background}`).toBeGreaterThanOrEqual(4.5);
+    await capture(`desktop-${theme}`);
+  }
+  await page.getByRole('link', { name: 'Открыть задачу: Подготовить лабораторную работу', exact: true }).click();
+  for (const title of ['Составить план', 'Написать код', 'Проверить результат']) {
+    await page.getByLabel('Новая подзадача', { exact: true }).fill(title);
+    await page.locator('.subtasks').getByRole('button', { name: '+', exact: true }).click();
+  }
+  await page.getByLabel('Составить план', { exact: true }).check();
+  await capture('desktop-card');
+  await page.setViewportSize({ width: 360, height: 900 });
+  await capture('mobile-card');
+  await page.getByRole('link', { name: 'Закрыть карточку', exact: true }).click();
+  await page.getByRole('button', { name: 'Списки', exact: true }).click();
+  await capture('mobile-menu');
+});
+
 test('Списки, изоляция задач, переименование, удаление с Escape и подтверждением', async ({ page }) => {
   await createList(page);
   await addTask(page, 'Отчёт');
