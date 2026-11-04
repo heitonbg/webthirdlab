@@ -9,7 +9,7 @@ export function Layout() {
   const location = useLocation();
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      const target = location.state?.focusId ? document.getElementById(location.state.focusId) : document.querySelector('[data-page-title]');
+      const target = (location.state?.focusId && document.getElementById(location.state.focusId)) || document.querySelector('[data-page-title]');
       target?.focus();
       document.title = `${document.querySelector('[data-page-title]')?.textContent || 'Список дел'} — менеджер задач`;
     });
