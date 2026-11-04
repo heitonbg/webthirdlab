@@ -54,15 +54,12 @@ test('Задержка поиска составляет 300 мс после п�
   await expect(page.locator('.task-list > li')).toHaveCount(1);
 });
 
-test('Контраст текста обеих тем и эскизы готовых экранов', async ({ page }) => {
+test('Контраст текста обеих тем и мобильная карточка', async ({ page }) => {
   await createList(page);
   await addTask(page, 'Подготовить лабораторную работу');
   await addTask(page, 'Повторить React и маршрутизацию');
   await addTask(page, 'Прочитать методичку');
   await page.getByLabel('Выполнено: Прочитать методичку', { exact: true }).check();
-  const capture = async (name) => {
-    if (process.env.CAPTURE_DOCS === '1') await page.screenshot({ path: `docs/sketches/${name}.png`, fullPage: true });
-  };
   await page.setViewportSize({ width: 1280, height: 900 });
   for (const theme of ['light', 'dark']) {
     if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: /Включить .* тему/ }).click();
@@ -76,7 +73,6 @@ test('Контраст текста обеих тем и эскизы готов
       return ['--bg', '--surface', '--surface-alt'].flatMap((background) => ['--text', '--muted', '--accent', '--error'].map((foreground) => ({ foreground, background, ratio: contrast(foreground, background) })));
     });
     for (const combination of ratios) expect(combination.ratio, `${theme}: ${combination.foreground} / ${combination.background}`).toBeGreaterThanOrEqual(4.5);
-    await capture(`desktop-${theme}`);
   }
   await page.getByRole('link', { name: 'Открыть задачу: Подготовить лабораторную работу', exact: true }).click();
   for (const title of ['Составить план', 'Написать код', 'Проверить результат']) {
@@ -84,12 +80,12 @@ test('Контраст текста обеих тем и эскизы готов
     await page.locator('.subtasks').getByRole('button', { name: '+', exact: true }).click();
   }
   await page.getByLabel('Составить план', { exact: true }).check();
-  await capture('desktop-card');
+  await expect(page.getByText('Выполнено 1 из 3', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 360, height: 900 });
-  await capture('mobile-card');
+  await expect(page.getByLabel('Название задачи', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Закрыть карточку', exact: true }).click();
   await page.getByRole('button', { name: 'Списки', exact: true }).click();
-  await capture('mobile-menu');
+  await expect(page.locator('#sidebar')).toBeVisible();
 });
 
 test('Списки, изоляция задач, переименование, удаление с Escape и подтверждением', async ({ page }) => {
@@ -269,6 +265,5 @@ for (const width of [360, 768, 1280]) {
     await page.getByRole('link', { name: /^Открыть задачу:/ }).click();
     await expect(page.getByLabel('Название задачи', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await page.screenshot({ path: `test-results/layout-${width}.png`, fullPage: true });
   });
 }

@@ -1,17 +1,20 @@
 # Маршруты и данные
 
-| URL | Экран |
+| Адрес | Страница |
 |---|---|
-| / | Первый список или приглашение создать список |
-| /lists/:listId | Список |
-| /lists/:listId/tasks/:taskId | Вложенная карточка |
-| * | Страница не найдена |
+| `/` | Первый список или форма создания |
+| `/lists/:listId` | Список задач |
+| `/lists/:listId/tasks/:taskId` | Карточка задачи |
+| Остальные адреса | Страница не найдена |
 
-`?filter=all|active|done` сохраняется при открытии и закрытии карточки.
-Неизвестные идентификаторы обрабатываются отдельно. Поиск сбрасывается при смене listId.
+Фильтр хранится в параметре `filter=all|active|done`. Он сохраняется при открытии карточки и перезагрузке. Для неизвестного списка или задачи выводится сообщение со ссылкой назад.
 
-Данные v2: `{ lists: [{ id, title }], tasks: [{ id, listId, title, description, time, done, createdAt, subtasks: [{ id, title, done }] }] }`.
-Ключи localStorage: `todo-app:v2`, `todo-app:theme`. Старые задачи переносятся во «Входящие».
+## Данные
 
-Действия: list/added, list/updated, list/removed; task/added, task/updated, task/toggled, task/removed, task/cleared; subtask/added, subtask/updated, subtask/toggled, subtask/removed.
-Удаление списка каскадное. Отметка задачи независима от подзадач.
+- Список: `id, title`.
+- Задача: `id, listId, title, description, time, done, createdAt, subtasks`.
+- Подзадача: `id, title, done`.
+
+Ключ данных в localStorage — `todo-app:v2`, темы — `todo-app:theme`. Задачи старого формата `todo-app:v1` переносятся в список «Входящие».
+
+Редьюсер обрабатывает добавление, изменение и удаление списков, задач и подзадач, отметку выполнения и очистку выполненных задач. Обновления создают новые объекты и массивы. При удалении списка удаляются все его задачи.

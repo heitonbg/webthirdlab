@@ -1,50 +1,23 @@
-# Дерево компонентов
-
-Первоначальный план сохранён в `ec99b7e`, до исходного кода. Ниже — актуальная структура.
-
-StrictMode → ThemeProvider → TodoProvider → RouterProvider → Layout.
-
-| Компонент | Props | Локальное состояние | Контекст |
-|---|---|---|---|
-| Layout | — | открытие мобильного меню | тема |
-| Sidebar | onNavigate | — | данные |
-| TextForm | label, onSubmit, initial, button, placeholder, inputId, maxLength, autoFocus | текст, ошибка; ref ввода | — |
-| ListPage | listId | запрос поиска, переименование, подтверждение удаления | данные |
-| AddTaskForm | onAdd | название, описание, время, ошибка; ref ввода | — |
-| TaskItem | task, search, onDelete | — | данные |
-| TaskCard | — (listId/taskId из маршрута) | подтверждение удаления | данные |
-| TaskEditor | task | поля формы, ошибка, сообщение; ref названия | данные |
-| SubtaskList | task | — | данные |
-| SubtaskItem | subtask, taskId, onRemove | режим редактирования | данные |
-| ConfirmDialog | title, children, onConfirm, onClose | инициатор фокуса; ref dialog | — |
-| HomePage / NotFoundPage | — | — | данные / — |
+# Компоненты
 
 ```text
-StrictMode
-└─ ThemeProvider
-   └─ TodoProvider
-      └─ RouterProvider
-         └─ Layout (переключатель темы встроен в шапку)
-            ├─ Sidebar
-            │  ├─ NavLink[]
-            │  └─ TextForm (новый список)
-            └─ Outlet
-               ├─ HomePage → TextForm / Navigate
-               ├─ ListRoute → ListPage (key=listId)
-               │  ├─ TextForm (переименование)
-               │  ├─ AddTaskForm
-               │  ├─ Поиск / фильтры
-               │  ├─ TaskItem[]
-               │  ├─ ConfirmDialog (условно)
-               │  └─ Outlet → TaskCard
-               │     ├─ TaskEditor (key=task.id)
-               │     ├─ SubtaskList
-               │     │  ├─ SubtaskItem[] → TextForm (условно)
-               │     │  └─ TextForm (новая подзадача)
-               │     └─ ConfirmDialog (условно)
-               └─ NotFoundPage
+Layout
+├─ Sidebar — списки и форма создания
+└─ Outlet
+   ├─ HomePage — создание первого списка
+   ├─ ListPage — задачи, поиск и фильтры
+   │  ├─ AddTaskForm
+   │  ├─ TaskItem
+   │  └─ TaskCard
+   │     ├─ TaskEditor
+   │     └─ SubtaskList → SubtaskItem
+   └─ NotFoundPage
 ```
 
-ThemeProvider хранит тему через useLocalStorage. TodoProvider хранит данные через useReducer и сохраняет их эффектом. React-контексты и потребляющие хуки вынесены в отдельные модули, чтобы компоненты поддерживали Fast Refresh.
+`TextForm` используется для списков и подзадач, `ConfirmDialog` — для подтверждения удаления.
 
-Счётчики, прогресс и отфильтрованные массивы вычисляются при рендере.
+Общие данные находятся в `TodoProvider` и меняются через `todoReducer`. Тема хранится в `ThemeProvider`. Поля форм, поиск и открытие меню — локальное состояние компонентов.
+
+Основные props: `ListPage(listId)`, `TaskItem(task, search, onDelete)`, `TaskEditor(task)`, `SubtaskList(task)`. Формы получают обработчик сохранения.
+
+`useDebounce` задерживает поиск на 300 мс, `useLocalStorage` сохраняет тему. Счётчики, результаты поиска и прогресс вычисляются из данных.
