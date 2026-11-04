@@ -1,10 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { RouterProvider } from 'react-router';
+import { TodoProvider } from './state/TodoContext.jsx';
+import { ThemeProvider } from './theme/ThemeContext.jsx';
+import { router } from './router.jsx';
 import './styles/tokens.css';
 import './styles/base.css';
 
-function App() {
-  return <main className="workspace"><p className="eyebrow">Лабораторная работа №3</p><h1>Список дел</h1><p>Каркас React-приложения готов.</p></main>;
-}
-
-createRoot(document.getElementById('root')).render(<StrictMode><App /></StrictMode>);
+createRoot(document.getElementById('root')).render(<StrictMode><ThemeProvider><TodoProvider><RouterProvider router={router} /></TodoProvider></ThemeProvider></StrictMode>);
