@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.local
 method.txt
+test-results/
+playwright-report/
