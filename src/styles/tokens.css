@@ -1,0 +1,28 @@
+:root {
+  font-family: "Courier New", Courier, monospace;
+  color-scheme: light;
+  --bg: #faf6ee;
+  --surface: #fffdf8;
+  --surface-alt: #eee5d6;
+  --text: #29231c;
+  --muted: #665848;
+  --accent: #a34d00;
+  --accent-fill: #ff8303;
+  --accent-ink: #1a1916;
+  --border: #b2a18a;
+  --error: #a12525;
+  --shadow: 0 24px 70px #29231c20;
+  --radius: 4px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1916;
+  --surface: #24221e;
+  --surface-alt: #302b24;
+  --text: #e6d5b8;
+  --muted: #bbaa92;
+  --accent: #ff8303;
+  --border: #92724e;
+  --error: #ff9a91;
+  --shadow: 0 24px 70px #0007;
+}
