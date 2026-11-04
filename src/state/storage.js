@@ -6,17 +6,19 @@ const uniqueIds = (items) => new Set(items.map((item) => item.id)).size === item
 export function isValidState(value) {
   return Boolean(value && Array.isArray(value.lists) && Array.isArray(value.tasks)
     && value.lists.every((list) => list && isText(list.id) && isText(list.title))
-    && uniqueIds(value.lists) && uniqueIds(value.tasks)
+    && uniqueIds(value.lists)
     && value.tasks.every((task) => task && isText(task.id) && isText(task.title)
       && value.lists.some((list) => list.id === task.listId)
       && typeof task.done === 'boolean' && typeof task.description === 'string'
-      && typeof task.time === 'string' && Number.isFinite(task.createdAt)
-      && Array.isArray(task.subtasks) && uniqueIds(task.subtasks)
-      && task.subtasks.every((sub) => sub && isText(sub.id) && isText(sub.title) && typeof sub.done === 'boolean')));
+      && typeof task.time === 'string' && Number.isFinite(task.createdAt) && Math.abs(task.createdAt) <= 8.64e15
+      && Array.isArray(task.subtasks)
+      && task.subtasks.every((sub) => sub && isText(sub.id) && isText(sub.title) && typeof sub.done === 'boolean')
+      && uniqueIds(task.subtasks)) && uniqueIds(value.tasks));
 }
 
-export function loadState(storage = localStorage) {
+export function loadState(storage) {
   try {
+    storage ??= localStorage;
     const saved = storage.getItem(STORAGE_KEY);
     if (saved !== null) {
       const parsed = JSON.parse(saved);
@@ -34,7 +36,7 @@ export function loadState(storage = localStorage) {
   } catch { return empty(); }
 }
 
-export function saveState(state, storage = localStorage) {
-  try { storage.setItem(STORAGE_KEY, JSON.stringify(state)); return true; }
+export function saveState(state, storage) {
+  try { (storage ?? localStorage).setItem(STORAGE_KEY, JSON.stringify(state)); return true; }
   catch { return false; }
 }

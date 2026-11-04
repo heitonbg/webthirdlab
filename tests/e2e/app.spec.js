@@ -57,17 +57,17 @@ test('Карточка, все операции с подзадачами, пр�
   await page.getByRole('button', { name: 'Удалить подзадачу: Тесты', exact: true }).click();
   await expect(page.getByText('Выполнено 2 из 2', { exact: true })).toBeVisible();
   await page.getByLabel('Название задачи', { exact: true }).fill('');
-  await page.getByLabel('Описание', { exact: true }).focus();
+  await page.getByRole('region', { name: 'Карточка задачи', exact: true }).getByLabel('Описание', { exact: true }).focus();
   await expect(page.getByRole('alert')).toContainText('Название не может быть пустым');
   await page.getByLabel('Название задачи', { exact: true }).fill('Лабораторная 3');
-  await page.getByLabel('Описание', { exact: true }).fill('<b>Описание как текст</b>');
+  await page.getByRole('region', { name: 'Карточка задачи', exact: true }).getByLabel('Описание', { exact: true }).fill('<b>Описание как текст</b>');
   await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
   const direct = page.url();
   expect(direct).toContain('filter=active');
   await page.reload();
   await expect(page).toHaveURL(direct);
   await expect(page.getByLabel('Название задачи', { exact: true })).toHaveValue('Лабораторная 3');
-  await expect(page.getByLabel('Описание', { exact: true })).toHaveValue('<b>Описание как текст</b>');
+  await expect(page.getByRole('region', { name: 'Карточка задачи', exact: true }).getByLabel('Описание', { exact: true })).toHaveValue('<b>Описание как текст</b>');
   await expect(page.getByText('Выполнено 2 из 2', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Закрыть карточку', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Открыть задачу: Лабораторная 3' })).toBeFocused();
@@ -130,9 +130,10 @@ test('Тема определяется системой, сохраняется
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.route('**/src/main.jsx', (route) => route.abort());
+  await page.route(/\/(?:src\/main\.jsx|assets\/.*\.js)(?:\?|$)/, (route) => route.abort());
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('#root')).toBeEmpty();
 });
 
 test('Миграция Л2, повреждённое хранилище и страницы 404', async ({ page }) => {

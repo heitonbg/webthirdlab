@@ -29,6 +29,9 @@ test('Очистка выполненных ограничена текущим 
   assert.deepEqual(next.tasks.map((item) => item.id), ['t2']);
 });
 test('Повреждённое хранилище не мешает запуску', () => {
+  assert.equal(isValidState({ lists: [], tasks: [null] }), false);
+  const invalidDate = initial(); invalidDate.tasks[0].createdAt = 1e30;
+  assert.equal(isValidState(invalidDate), false);
   for (const value of ['not json', '{}', '{"lists":[],"tasks":[null]}']) assert.deepEqual(loadState(memory({ 'todo-app:v2': value })), { lists: [], tasks: [] });
   assert.deepEqual(loadState({ getItem() { throw new Error('denied'); } }), { lists: [], tasks: [] });
   assert.equal(saveState(initial(), { setItem() { throw new Error('quota'); } }), false);

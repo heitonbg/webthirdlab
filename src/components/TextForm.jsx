@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
 
-export function TextForm({ label, onSubmit, initial = '', button = 'Добавить', placeholder = '', inputId, maxLength = 200 }) {
+export function TextForm({ label, onSubmit, initial = '', button = 'Добавить', placeholder = '', inputId, maxLength = 200, autoFocus = false }) {
   const generated = useId();
   const id = inputId || generated;
   const input = useRef(null);
@@ -14,7 +14,7 @@ export function TextForm({ label, onSubmit, initial = '', button = 'Добави
   }
   return <form onSubmit={submit} className="text-form" noValidate>
     <label htmlFor={id}>{label}</label>
-    <div className="input-row"><input ref={input} id={id} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder} maxLength={maxLength} aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined} required /><button className="primary" type="submit">{button}</button></div>
+    <div className="input-row"><input ref={input} id={id} autoFocus={autoFocus} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder} maxLength={maxLength} aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined} required /><button className="primary" type="submit">{button}</button></div>
     {error && <p className="error" role="alert" id={`${id}-error`}>{error}</p>}
   </form>;
 }

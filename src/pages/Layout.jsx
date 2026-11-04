@@ -15,7 +15,7 @@ export function Layout() {
     });
     return () => cancelAnimationFrame(frame);
   }, [location]);
-  return <div className="app-shell">
+  return <div className="app-shell" onKeyDown={(event) => { if (menuOpen && event.key === 'Escape') { setMenuOpen(false); document.querySelector('.menu-toggle')?.focus(); } }}>
     <a className="skip-link" href="#main">К содержимому</a>
     <header className="topbar">
       <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">✓</span><span>Список дел<span className="brand-caption">МЕНЕДЖЕР ЗАДАЧ</span></span></Link>
