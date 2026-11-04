@@ -104,6 +104,12 @@ test('Списки, изоляция задач, переименование, �
   await page.getByLabel('Название списка', { exact: true }).fill('Проект');
   await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Проект', exact: true })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Списки задач', exact: true }).getByRole('link', { name: /^Учёба/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: 'Учёба', exact: true })).toBeFocused();
+  await page.getByRole('navigation', { name: 'Списки задач', exact: true }).getByRole('link', { name: /^Проект/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: 'Проект', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Удалить список', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
@@ -124,6 +130,9 @@ test('Карточка, все операции с подзадачами, пр�
   await page.getByRole('button', { name: 'Активные', exact: true }).click();
   await page.getByRole('link', { name: 'Открыть задачу: Лабораторная' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Лабораторная', exact: true })).toBeFocused();
+  await page.getByLabel('Новая подзадача', { exact: true }).fill('   ');
+  await page.locator('.subtasks').getByRole('button', { name: '+', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Введите текст');
   for (const title of ['План', 'Код', 'Проверка']) {
     await page.getByLabel('Новая подзадача', { exact: true }).fill(title);
     await page.locator('.subtasks').getByRole('button', { name: '+', exact: true }).click();
@@ -217,6 +226,22 @@ test('Тема определяется системой, сохраняется
   await expect(page.locator('#root')).toBeEmpty();
 });
 
+test('Удаление из карточки возвращает в список, удаление последнего списка — к началу', async ({ page }) => {
+  await createList(page);
+  await addTask(page, 'Удаляемая задача');
+  await page.getByRole('link', { name: 'Открыть задачу: Удаляемая задача', exact: true }).click();
+  await page.getByRole('button', { name: 'Удалить задачу', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Удалить', exact: true }).click();
+  await expect(page.getByLabel('Новая задача', { exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Чистый лист', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Удалить список', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Удалить', exact: true }).click();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByLabel('Как назовём список?')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Как назовём список?')).toBeVisible();
+});
+
 test('Миграция Л2, повреждённое хранилище и страницы 404', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => { localStorage.setItem('todo-app:v1', JSON.stringify({ tasks: [{ title: 'Старая задача', body: 'Из Л2', done: false, time: '09:30' }] })); localStorage.removeItem('todo-app:v2'); });
@@ -240,7 +265,7 @@ for (const width of [360, 768, 1280]) {
     await createList(page, 'Очень длинное название списка для проверки переноса');
     await addTask(page, 'Длинная задача ' + 'а'.repeat(100));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    if (width === 360) { await page.getByRole('button', { name: 'Списки', exact: true }).click(); await expect(page.locator('#sidebar')).toBeVisible(); await page.keyboard.press('Tab'); await page.keyboard.press('Escape'); }
+    if (width === 360) { await page.getByRole('button', { name: 'Списки', exact: true }).click(); await expect(page.locator('#sidebar')).toBeVisible(); await page.keyboard.press('Tab'); await page.keyboard.press('Escape'); await expect(page.locator('#sidebar')).toBeHidden(); await expect(page.getByRole('button', { name: 'Списки', exact: true })).toBeFocused(); }
     await page.getByRole('link', { name: /^Открыть задачу:/ }).click();
     await expect(page.getByLabel('Название задачи', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
